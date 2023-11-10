@@ -25,6 +25,7 @@
     name: epel-release
     state: latest
   become: true
+  tags: epel
 
 - name: Add the Kubernetes yum repository
   ansible.builtin.copy:
