@@ -41,8 +41,7 @@
 
 - name: Install necessary packages for Enterprise Linux
   ansible.builtin.dnf:
-    name: "{{ common_packages[ansible_distribution_major_version|int] }}"
+    name: "{{ common_packages[ansible_distribution_major_version|int] | difference(excluded_packages) }}"
     update_cache: true
     state: present
   become: true
-  tags: packages
