@@ -235,7 +235,14 @@ ensure_prereqs() {
             log "pulled ${RECEPTOR_REF}"
         else
             log "building ${RECEPTOR_REF} from ${RECEPTOR_BUILD_DIR}"
-            podman build -q \
+            # Build on the host network: the dnf install has to reach the base
+            # image's package repos, and resolving through podman's default
+            # build network failed to find the Rocky mirror. Host networking
+            # uses the host's resolvers directly, sidestepping the same
+            # internal-DNS limitation described in ensure_network. The
+            # Dockerfile is ours and publishes no ports, so there is no
+            # isolation to lose.
+            podman build --network=host -q \
                 --build-arg ASCENDER_IMAGE="${ASCENDER_IMAGE}" \
                 --build-arg ASCENDER_VERSION="${ASCENDER_VERSION}" \
                 --build-arg RECEPTOR_IMAGE="${RECEPTOR_IMAGE}" \

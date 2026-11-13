@@ -30,11 +30,23 @@ install -m 0755 "${SRC_DIR}/manage-containers.sh" "${LIBEXEC}/manage-containers.
 rm -rf "${LIBEXEC}/scripts" "${LIBEXEC}/receptor"
 cp -r "${SRC_DIR}/scripts" "${LIBEXEC}/scripts"
 cp -r "${SRC_DIR}/receptor" "${LIBEXEC}/receptor"
-chmod 0755 "${LIBEXEC}"/scripts/*.sh "${LIBEXEC}"/receptor/*.sh
+# cp keeps the source mode, and a checkout or install under a restrictive
+# umask (077) leaves this tree 0700/0600. Set the modes explicitly so the
+# uid 1000 containers can read what is mounted into them.
+chmod 0755 "${LIBEXEC}" "${LIBEXEC}/receptor" "${LIBEXEC}"/scripts/*.sh "${LIBEXEC}"/receptor/*.sh
+# The receptor image runs as uid 1000 and reads containers.conf at runtime;
+# the Dockerfile is made readable with it for a usable build context.
+chmod 0644 "${LIBEXEC}"/receptor/containers.conf "${LIBEXEC}"/receptor/Dockerfile
+# Traverse-only: the containers open the scripts by name under /opt/ascender
+# and never need to list the directory.
+chmod g+X,o+X "${LIBEXEC}/scripts"
 
 echo "installing config to ${CONFDIR}"
 mkdir -p "${CONFDIR}/certs"
 chmod 0755 "${CONFDIR}"
+# Mounted as a directory into the web container, which runs as uid 1000 and
+# must be able to traverse it to reach the certificate and key.
+chmod 0755 "${CONFDIR}/certs"
 for f in settings.py nginx.conf nginx-locations.conf nginx-http-redirect.conf nginx-http-insecure.conf receptor.conf valkey.conf; do
     install -m 0644 "${SRC_DIR}/config/${f}" "${CONFDIR}/${f}"
 done

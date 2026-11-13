@@ -39,6 +39,10 @@ print('storage.conf ok:', o['additionalimagestores'], o['overlay']['mount_progra
     echo 'unqualified-search-registries = []' > /etc/containers/registries.conf.d/force-fully-qualified-images.conf
 
 COPY containers.conf /etc/containers/containers.conf
+# COPY preserves the build context mode and this tree may be installed with a
+# restrictive umask. The container runs as uid 1000, so an 0600 file makes
+# `podman --version` fail and ansible-runner report that podman is missing.
+RUN chmod 0644 /etc/containers/containers.conf
 COPY launch_awx_receptor.sh /usr/bin/launch_awx_receptor.sh
 
 # Rootless podman needs a named user with subordinate id ranges.
